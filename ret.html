@@ -51,7 +51,7 @@ document.getElementById("CPU_Number").innerHTML = obj.platform[0].CPU_Number;
 document.getElementById("Node").innerHTML = obj.platform[0].Node;
 var x=(obj.platform[0].Memory_info)/1000000000;
 var y=x.toString();
-y=y.slice(0,3);
+y=y.slice(0,1);
 document.getElementById("Memory_info").innerHTML = y + " GB";
 </script>
 
