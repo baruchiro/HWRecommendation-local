@@ -1,7 +1,11 @@
 import psutil
 import platform
 import json
-import json2html
+import shutil
+import cpuinfo
+
+# import json2html
+# import wmi # i try to retrieve motherboard with this library. FAILED for now.
 
 print("Machine: " + platform.machine())
 print("Processor: " + platform.processor())
@@ -12,8 +16,22 @@ print("CPU Number: " + str(psutil.cpu_count()))
 print("Node: " + platform.node())
 print("Memory info[RAM]: " + str(psutil.virtual_memory()))
 
-# TODO::
-# Ghz
+
+total, used, free = shutil.disk_usage("\\")
+obj_Disk = psutil.disk_usage('/')
+print("\nHard Disk info: ")
+print("Total: %d GB" % (total // (2**30)))
+print("Used: %d GB" % (used // (2**30)))
+print("Free: %d GB" % (free // (2**30)))
+print("Percentage of usage: "+str(obj_Disk.percent)+"%")
+
+print("\ncpu info :"+cpuinfo.get_cpu_info()['brand'])
+print("architecture: "+cpuinfo.get_cpu_info()['arch'])
+
+# <!--TODO::
+# MotherBoard
+# GPU
+
 
 data = {}
 data['platform'] = []
