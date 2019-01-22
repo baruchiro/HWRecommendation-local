@@ -38,11 +38,14 @@ data['platform'] = []
 data['platform'].append({
     'Machine': platform.machine(),
     'Processor': platform.processor(),
-    'System OS': platform.system(),
+    'System_OS': platform.system(),
     'Version': platform.version(),
-    'CPU Number': str(psutil.cpu_count()),
+    'CPU_Number': str(psutil.cpu_count()),
     'Node': platform.node(),
-    'Memory info[RAM]': str(psutil.virtual_memory().total)
+    'Memory_info[RAM]': str(psutil.virtual_memory().total),
+    'Cpu_info': cpuinfo.get_cpu_info()['brand'],
+    'Architecture': cpuinfo.get_cpu_info()['arch'],
+    'Free_MemorySpace(HD)': "Free: %d GB" % (free // (2**30))
 })
-with open('data.txt', 'w') as outfile:
-    json.dump(data, outfile)
+#with open('data.txt', 'w') as outfile:
+#    json.dump(data, outfile)
