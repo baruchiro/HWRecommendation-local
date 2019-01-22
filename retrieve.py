@@ -3,6 +3,7 @@ import platform
 import json
 import shutil
 import cpuinfo
+import requests
 
 # import json2html
 # import wmi # i try to retrieve motherboard with this library. FAILED for now.
@@ -25,8 +26,8 @@ print("Used: %d GB" % (used // (2**30)))
 print("Free: %d GB" % (free // (2**30)))
 print("Percentage of usage: "+str(obj_Disk.percent)+"%")
 
-print("\ncpu info :"+cpuinfo.get_cpu_info()['brand'])
-print("architecture: "+cpuinfo.get_cpu_info()['arch'])
+#print("\ncpu info :"+cpuinfo.get_cpu_info()['brand'])
+#print("architecture: "+cpuinfo.get_cpu_info()['arch'])
 
 # <!--TODO::
 # MotherBoard
@@ -43,9 +44,17 @@ data['platform'].append({
     'CPU_Number': str(psutil.cpu_count()),
     'Node': platform.node(),
     'Memory_info[RAM]': str(psutil.virtual_memory().total),
-    'Cpu_info': cpuinfo.get_cpu_info()['brand'],
-    'Architecture': cpuinfo.get_cpu_info()['arch'],
+   # 'Cpu_info': cpuinfo.get_cpu_info()['brand']
+   # 'Architecture': cpuinfo.get_cpu_info()['arch'],
     'Free_MemorySpace(HD)': "Free: %d GB" % (free // (2**30))
 })
-#with open('data.txt', 'w') as outfile:
+
+dataDict = {'name': 'Product Title Here'}
+dataStr = json.dumps(dataDict)
+url = 'https://hwwebapi.azurewebsites.net/api/TestStrings'
+r = requests.post(url, data=dataStr)
+print(r.status_code)
+
+
+# with open('data.txt', 'w') as outfile:
 #    json.dump(data, outfile)
