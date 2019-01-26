@@ -9,6 +9,7 @@ import os
 import webbrowser
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     memory_types = {
         1: "Other",
         2: "Unknown",
