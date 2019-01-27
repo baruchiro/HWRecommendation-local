@@ -1,0 +1,7 @@
+/.idea/
+/venv/
+/data.txt
+/dist/
+/build/
+__pycache__
+*.pyc
