@@ -9,6 +9,7 @@ import os
 import webbrowser
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     memory_types = {
         1: "Other",
         2: "Unknown",
@@ -70,7 +71,6 @@ if __name__ == "__main__":
     # 1Dh LPDDR3
     # 1Eh LPDDR4
 
-
     class SysInfo(object):
         cpu = cpuinfo.cpuinfo.get_cpu_info()
         memory = psutil.virtual_memory()
@@ -81,7 +81,6 @@ if __name__ == "__main__":
 
         def get_memories(self):
             return [{"capacity": sys_info.memory.total, "type": 0, "ghz": 0}]
-
 
     current_os = platform.uname().system
     if current_os == 'Windows':
@@ -118,53 +117,36 @@ if __name__ == "__main__":
                             }
                         )
                 return result
+            def get_motherboard(self):
+                res = []
+                mb = self.wmi.query("select * from Win32_baseboard")
+                for mbs in mb:
+                    res.append(
+                        {
+                            "manufacturer": str(mbs.Manufacturer),
+                            "product": str(mbs.Product),
+                            "version": str(mbs.Version)
+                        }
+                    )
+                return res
+            def get_gpu(self):
+                res2 = []
+                gpu = self.wmi.query("select * from Win32_VideoController")
+                for gpus in gpu:
+                    res2.append(
+                        {
+                            "name": str(gpus.Name),
+                            "adapter ram": str(gpus.AdapterRAM)
+                        }
+                    )
+                return res2
 
-    elif current_os == 'Linux':
-        class Info(SysInfo):
-            pass
+
 
     sys_info = Info()
-
-    # print("Machine: " + platform.machine())
-    # print("Processor: " + platform.processor())
-    # print("System OS: " + platform.system())
-    # print("Version: " + platform.version())
-    # print("CPU Number: " + str(psutil.cpu_count()))
-    # print("Physical CPU number: "+str(psutil.cpu_count(logical=False)))
-    # print("Node: " + platform.node())
-    # print("Memory info[RAM]: " + str(psutil.virtual_memory()))
-
-
-    total, used, free = shutil.disk_usage("\\")
-    obj_Disk = psutil.disk_usage('/')
-    #print("\nHard Disk info: ")
-    #print("Total: %d GB" % (total // (2**30)))
-    #print("Used: %d GB" % (used // (2**30)))
-    #print("Free: %d GB" % (free // (2**30)))
-    #print("Percentage of usage: "+str(obj_Disk.percent)+"%")
-    #print("\ncpu info :"+cpuinfo.get_cpu_info()['brand'])
-    #print("architecture: "+cpuinfo.get_cpu_info()['arch'])
-
-    # <!--TODO::
-    # MotherBoard
-    # GPU
-
-
-    #data = {}
-    #data['platform'] = []
-    #data['platform'].append({
-    #    'Machine': platform.machine(),
-    #    'Processor': platform.processor(),
-    #    'System_OS': platform.system(),
-    #    'Version': platform.version(),
-    #    'CPU_Number': str(psutil.cpu_count()),
-    #    'Node': platform.node(),
-    #    'Memory_info[RAM]': str(psutil.virtual_memory().total),
-    #    'Cpu_info': cpuinfo.get_cpu_info()['brand']
-    #    'Architecture': cpuinfo.get_cpu_info()['arch'],
-    #    'Free_MemorySpace(HD)': "Free: %d GB" % (free // (2**30))
-    #})
-
+    # Still not full info about motherboard, but now we have info about the product himself.
+    print(sys_info.get_motherboard())
+    print(sys_info.get_gpu())
 
     data = {
         "processor": {
