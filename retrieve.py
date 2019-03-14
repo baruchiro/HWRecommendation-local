@@ -130,16 +130,16 @@ if __name__ == "__main__":
                     )
                 return res
             def get_gpu(self):
-                res2 = []
+                res1 = []
                 gpu = self.wmi.query("select * from Win32_VideoController")
                 for gpus in gpu:
-                    res2.append(
+                    res1.append(
                         {
                             "name": str(gpus.Name),
                             "adapter ram": str(gpus.AdapterRAM)
                         }
                     )
-                return res2
+                return res1
 
 
 
