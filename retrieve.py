@@ -123,9 +123,9 @@ if __name__ == "__main__":
                 for mbs in mb:
                     res.append(
                         {
-                            "manufacturer": str(mbs.Manufacturer),
-                            "product": str(mbs.Product),
-                            "version": str(mbs.Version)
+                            "manufacturer": mbs.Manufacturer,
+                            "product": mbs.Product,
+                            "version": mbs.Version
                         }
                     )
                 return res
@@ -135,18 +135,31 @@ if __name__ == "__main__":
                 for gpus in gpu:
                     res1.append(
                         {
-                            "name": str(gpus.Name),
-                            "adapter ram": str(gpus.AdapterRAM)
+                            "name": gpus.Name,
+                            "adapter ram": int(gpus.AdapterRAM)
                         }
                     )
                 return res1
+            def get_hardDisk(self):
+                res2 = []
+                hd = self.wmi.query("select * from Win32_DiskDrive")
+                for hds in hd:
+                    res2.append(
+                        {
+                            "model": hds.model,
+                            "size": int(hds.Size)
+                        }
+                    )
+                    return res2
 
 
 
     sys_info = Info()
     # Still not full info about motherboard, but now we have info about the product himself.
+    # Same thing about mediaType HardDisk, and GPU details.
     print(sys_info.get_motherboard())
     print(sys_info.get_gpu())
+    print(sys_info.get_hardDisk())
 
     data = {
         "processor": {
