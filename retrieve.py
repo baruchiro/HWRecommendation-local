@@ -134,7 +134,7 @@ if __name__ == "__main__":
                 res1.append(
                     {
                         "name": gpus.Name,
-                        "adapter ram": int(gpus.AdapterRAM)
+                        "processor": gpus.VideoProcessor
                     }
                 )
         return res1
@@ -146,10 +146,13 @@ if __name__ == "__main__":
             res2.append(
                 {
                     "model": hds.model,
-                    "size": int(hds.Size)
+                    "capacity": int(hds.Size)
                 }
             )
         return res2
+
+    def get_ram_maxcapacity():
+        return wmi.Win32_PhysicalMemoryArray()[0].MaxCapacity
 
     # Still not full info about motherboard, but now we have info about the product himself.
     # Same thing about mediaType HardDisk, and GPU details.
@@ -165,9 +168,7 @@ if __name__ == "__main__":
         "disks": get_hardDisk(),
         "motherBoard": {
             "ddrSockets": get_num_of_ram_slots(),
-            "maxRam": 0,
-            "sataConnections": 0,
-            "architecture": 0
+            "maxRam": get_ram_maxcapacity(),
         },
         "gpus": get_gpus()
     }
