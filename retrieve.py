@@ -11,7 +11,7 @@ from wmi import WMI
 import sys
 
 if __name__ == "__main__":
-    debug = sys.argv[1] == "debug"
+    debug = "debug" in sys.argv
     multiprocessing.freeze_support()
     memory_types = {
         1: "Other",
@@ -74,99 +74,96 @@ if __name__ == "__main__":
     # 1Dh LPDDR3
     # 1Eh LPDDR4
 
-    class Info:
-        cpu = cpuinfo.cpuinfo.get_cpu_info()
-        memory = psutil.virtual_memory()
-        disk = shutil.disk_usage("\\")
+    cpu = cpuinfo.cpuinfo.get_cpu_info()
+    memory = psutil.virtual_memory()
+    disk = shutil.disk_usage("\\")
 
-        def __init__(self, *args, **kwargs):
-            self.wmi = WMI()
+    wmi = WMI()
 
-        def get_num_of_ram_slots(self):
-            memory = self.wmi.query(
-                "select MemoryDevices from win32_PhysicalMemoryArray")
-            return int(memory[0].MemoryDevices)
+    def get_num_of_ram_slots():
+        memory = wmi.query(
+            "select MemoryDevices from win32_PhysicalMemoryArray")
+        return int(memory[0].MemoryDevices)
 
-        def get_memories(self):
-            result = []
-            memories = self.wmi.query("select * from Win32_PhysicalMemory")
-            for memory in memories:
-                if hasattr(memory, "SMBIOSMemoryType"):
-                    result.append(
-                        {
-                            "capacity": int(memory.Capacity),
-                            "type": memory_types[int(memory.SMBIOSMemoryType)],
-                            "ghz": int(memory.Speed)
-                        }
-                    )
-                else:
-                    result.append(
-                        {
-                            "capacity": int(memory.Capacity),
-                            "type": memory_types[int(memory.MemoryType)],
-                            "ghz": int(memory.Speed)
-                        }
-                    )
-            return result
-
-        def get_motherboard(self):
-            res = []
-            mb = self.wmi.query("select * from Win32_baseboard")
-            for mbs in mb:
-                res.append(
+    def get_memories():
+        result = []
+        memories = wmi.query("select * from Win32_PhysicalMemory")
+        for memory in memories:
+            if hasattr(memory, "SMBIOSMemoryType"):
+                result.append(
                     {
-                        "manufacturer": mbs.Manufacturer,
-                        "product": mbs.Product,
-                        "version": mbs.Version
+                        "capacity": int(memory.Capacity),
+                        "type": memory_types[int(memory.SMBIOSMemoryType)],
+                        "ghz": int(memory.Speed)
                     }
                 )
-            return res
-
-        def get_gpu(self):
-            res1 = []
-            gpu = self.wmi.query("select * from Win32_VideoController")
-            for gpus in gpu:
-                res1.append(
+            else:
+                result.append(
                     {
-                        "name": gpus.Name,
-                        "adapter ram": int(gpus.AdapterRAM)
+                        "capacity": int(memory.Capacity),
+                        "type": memory_types[int(memory.MemoryType)],
+                        "ghz": int(memory.Speed)
                     }
                 )
-            return res1
+        return result
 
-        def get_hardDisk(self):
-            res2 = []
-            hd = self.wmi.query("select * from Win32_DiskDrive")
-            for hds in hd:
-                res2.append(
-                    {
-                        "model": hds.model,
-                        "size": int(hds.Size)
-                    }
-                )
-                return res2
+    def get_motherboard():
+        res = []
+        mb = wmi.query("select * from Win32_baseboard")
+        for mbs in mb:
+            res.append(
+                {
+                    "manufacturer": mbs.Manufacturer,
+                    "product": mbs.Product,
+                    "version": mbs.Version
+                }
+            )
+        return res
 
-    sys_info = Info()
+    def get_gpu():
+        res1 = []
+        gpu = wmi.query("select * from Win32_VideoController")
+        for gpus in gpu:
+            res1.append(
+                {
+                    "name": gpus.Name,
+                    "adapter ram": int(gpus.AdapterRAM)
+                }
+            )
+        return res1
+
+    def get_hardDisk():
+        res2 = []
+        hd = wmi.query("select * from Win32_DiskDrive")
+        for hds in hd:
+            res2.append(
+                {
+                    "model": hds.model,
+                    "size": int(hds.Size)
+                }
+            )
+            return res2
+
     if debug:
         # Still not full info about motherboard, but now we have info about the product himself.
         # Same thing about mediaType HardDisk, and GPU details.
-        print(sys_info.get_motherboard())
-        print(sys_info.get_gpu())
-        print(sys_info.get_hardDisk())
+        print(get_motherboard())
+        print(get_gpu())
+        print(get_hardDisk())
 
     data = {
         "processor": {
-            "name": sys_info.cpu['brand'],
-            "gHz": sys_info.cpu['hz_advertised_raw'][0],
-            "numOfCores": sys_info.cpu['count'],
-            "architecture": f"x{sys_info.cpu['bits']}"
+            "name": cpu['brand'],
+            "gHz": cpu['hz_advertised_raw'][0],
+            "numOfCores": cpu['count'],
+            "architecture": f"x{cpu['bits']}"
         },
-        "memories": sys_info.get_memories(),
+        "memories": get_memories(),
         "disks": [
             {
                 "type": 0,
                 "rpm": 0,
-                "capacity": sys_info.disk.total
+                "capacity": disk.total
             }
         ],
         "motherBoard": {
