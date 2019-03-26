@@ -10,6 +10,12 @@ import webbrowser
 from wmi import WMI
 import sys
 
+
+def log(text):
+    if debug:
+        print(text)
+
+
 if __name__ == "__main__":
     debug = "debug" in sys.argv
     multiprocessing.freeze_support()
@@ -120,16 +126,17 @@ if __name__ == "__main__":
             )
         return res
 
-    def get_gpu():
+    def get_gpus():
         res1 = []
         gpu = wmi.query("select * from Win32_VideoController")
         for gpus in gpu:
-            res1.append(
-                {
-                    "name": gpus.Name,
-                    "adapter ram": int(gpus.AdapterRAM)
-                }
-            )
+            if gpus.VideoProcessor is not None:
+                res1.append(
+                    {
+                        "name": gpus.Name,
+                        "adapter ram": int(gpus.AdapterRAM)
+                    }
+                )
         return res1
 
     def get_hardDisk():
@@ -142,14 +149,10 @@ if __name__ == "__main__":
                     "size": int(hds.Size)
                 }
             )
-            return res2
+        return res2
 
-    if debug:
-        # Still not full info about motherboard, but now we have info about the product himself.
-        # Same thing about mediaType HardDisk, and GPU details.
-        print(get_motherboard())
-        print(get_gpu())
-        print(get_hardDisk())
+    # Still not full info about motherboard, but now we have info about the product himself.
+    # Same thing about mediaType HardDisk, and GPU details.
 
     data = {
         "processor": {
@@ -159,31 +162,23 @@ if __name__ == "__main__":
             "architecture": f"x{cpu['bits']}"
         },
         "memories": get_memories(),
-        "disks": [
-            {
-                "type": 0,
-                "rpm": 0,
-                "capacity": disk.total
-            }
-        ],
+        "disks": get_hardDisk(),
         "motherBoard": {
-            "ddrSockets": 0,
+            "ddrSockets": get_num_of_ram_slots(),
             "maxRam": 0,
             "sataConnections": 0,
             "architecture": 0
         },
-        "gpus": [
-            {
-                "cores": 0
-            }
-        ]
+        "gpus": get_gpus()
     }
+
+    log(data)
 
     headers = {'Content-Type': 'application/json'}
     r = requests.post(
         'https://hwwebapi.azurewebsites.net/api/Computers/Body', json=data, headers=headers)
-    print(r.status_code)
-    print(r.text)
+    log(r.status_code)
+    log(r.text)
     idS = str(r.json()['id'])
     webbrowser.open(
         'https://baruchiro.github.io/HWRecommendation-WebAPI/?id='+idS)
