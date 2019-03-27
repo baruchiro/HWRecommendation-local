@@ -88,8 +88,8 @@ def get_memories(wmi2):
         obj = {
             "capacity": int(memory.Capacity),
             "ghz": int(memory.Speed),
-            "bank_label": memory.bankLabel,
-            "Device_locator:": memory.DeviceLocator
+            "bankLabel": memory.bankLabel,
+            "deviceLocator": memory.DeviceLocator
         }
         if hasattr(memory, "SMBIOSMemoryType"):
             obj["type"] = memory_types[int(memory.SMBIOSMemoryType)]
@@ -151,7 +151,7 @@ def hardware_json():
         "motherBoard": {
             "ddrSockets": get_num_of_ram_slots(wmi),
             "maxRam": get_ram_maxcapacity(wmi),
-            "Manufacturer": mobo.Manufacturer,
+            "manufacturer": mobo.Manufacturer,
             "product": mobo.Product
         },
         "gpus": get_gpus(wmi)
