@@ -1,11 +1,6 @@
-import psutil
-import platform
-import json
-import shutil
 import cpuinfo
 import requests
 import multiprocessing
-import os
 import webbrowser
 from wmi import WMI
 import sys
@@ -16,9 +11,17 @@ def log(text):
         print(text)
 
 
-if __name__ == "__main__":
-    debug = "debug" in sys.argv
-    multiprocessing.freeze_support()
+def get_ram_maxcapacity(wmi2):
+    return wmi2.Win32_PhysicalMemoryArray()[0].MaxCapacity
+
+
+def get_num_of_ram_slots(wmi2):
+    memory = wmi2.query(
+        "select MemoryDevices from win32_PhysicalMemoryArray")
+    return int(memory[0].MemoryDevices)
+
+
+def get_memories(wmi2):
     memory_types = {
         1: "Other",
         2: "Unknown",
@@ -79,69 +82,62 @@ if __name__ == "__main__":
     # 1Ch LPDDR2
     # 1Dh LPDDR3
     # 1Eh LPDDR4
+    result = []
+    memories = wmi2.query("select * from Win32_PhysicalMemory")
+    for memory in memories:
+        obj = {
+            "capacity": int(memory.Capacity),
+            "ghz": int(memory.Speed),
+            "bank_label": memory.bankLabel,
+            "Device_locator:": memory.DeviceLocator
+        }
+        if hasattr(memory, "SMBIOSMemoryType"):
+            obj["type"] = memory_types[int(memory.SMBIOSMemoryType)]
+        else:
+            obj["type"] = memory_types[int(memory.MemoryType)]
+        result.append(obj)
+    return result
 
+
+def get_motherboard(wmi2):
+    return wmi2.Win32_baseboard()[0]
+
+
+def get_gpus(wmi2):
+    res1 = []
+    gpu = wmi2.query("select * from Win32_VideoController")
+    for gpus in gpu:
+        if gpus.VideoProcessor is not None:
+            res1.append(
+                {
+                    "name": gpus.Name,
+                    "processor": gpus.VideoProcessor
+                }
+            )
+    return res1
+
+
+def get_hardDisk(wmi2):
+    res2 = []
+    hd = wmi2.query("select * from Win32_DiskDrive")
+    for hds in hd:
+        res2.append(
+            {
+                "model": hds.model,
+                "capacity": int(hds.Size)
+            }
+        )
+    return res2
+
+
+def hardware_json():
     cpu = cpuinfo.cpuinfo.get_cpu_info()
-    memory = psutil.virtual_memory()
-    disk = shutil.disk_usage("\\")
 
     wmi = WMI()
 
-    def get_num_of_ram_slots():
-        memory = wmi.query(
-            "select MemoryDevices from win32_PhysicalMemoryArray")
-        return int(memory[0].MemoryDevices)
-
-    def get_memories():
-        result = []
-        memories = wmi.query("select * from Win32_PhysicalMemory")
-        for memory in memories:
-            obj = {
-                    "capacity": int(memory.Capacity),
-                    "ghz": int(memory.Speed),
-                    "bank label": memory.bankLabel,
-                    "Device locator:": memory.DeviceLocator
-                }
-            if hasattr(memory, "SMBIOSMemoryType"):
-                obj["type"] = memory_types[int(memory.SMBIOSMemoryType)]
-            else:
-                obj["type"] = memory_types[int(memory.MemoryType)]
-            result.append(obj)
-        return result
-
-    def get_motherboard():
-        return wmi.Win32_baseboard()[0]
-
-    def get_gpus():
-        res1 = []
-        gpu = wmi.query("select * from Win32_VideoController")
-        for gpus in gpu:
-            if gpus.VideoProcessor is not None:
-                res1.append(
-                    {
-                        "name": gpus.Name,
-                        "processor": gpus.VideoProcessor
-                    }
-                )
-        return res1
-
-    def get_hardDisk():
-        res2 = []
-        hd = wmi.query("select * from Win32_DiskDrive")
-        for hds in hd:
-            res2.append(
-                {
-                    "model": hds.model,
-                    "capacity": int(hds.Size)
-                }
-            )
-        return res2
-
-    def get_ram_maxcapacity():
-        return wmi.Win32_PhysicalMemoryArray()[0].MaxCapacity
-
     # Same thing about mediaType HardDisk, and GPU details.
 
-    mobo = get_motherboard()
+    mobo = get_motherboard(wmi)
 
     data = {
         "processor": {
@@ -150,23 +146,36 @@ if __name__ == "__main__":
             "numOfCores": cpu['count'],
             "architecture": f"x{cpu['bits']}"
         },
-        "memories": get_memories(),
-        "disks": get_hardDisk(),
+        "memories": get_memories(wmi),
+        "disks": get_hardDisk(wmi),
         "motherBoard": {
-            "ddrSockets": get_num_of_ram_slots(),
-            "maxRam": get_ram_maxcapacity(),
+            "ddrSockets": get_num_of_ram_slots(wmi),
+            "maxRam": get_ram_maxcapacity(wmi),
             "Manufacturer": mobo.Manufacturer,
             "product": mobo.Product
         },
-        "gpus": get_gpus()
+        "gpus": get_gpus(wmi)
     }
+    return data
 
+
+def postData(data):
+    headers = {'Content-Type': 'application/json'}
+    return requests.post(
+        'https://hwwebapi.azurewebsites.net/api/Computers/Body', json=data, headers=headers)
+
+
+if __name__ == "__main__":
+    debug = "debug" in sys.argv
+
+    multiprocessing.freeze_support()
+
+    data = hardware_json()
     log(data)
 
-    headers = {'Content-Type': 'application/json'}
-    r = requests.post(
-        'https://hwwebapi.azurewebsites.net/api/Computers/Body', json=data, headers=headers)
+    r = postData(data)
+
     log(r.status_code)
     log(r.text)
     idS = str(r.json()['id'])
-    webbrowser.open('https://baruchiro.github.io/HWRecommendation-WebAPI/?id='+idS)
+    webbrowser.open('https://baruchiro.github.io/HWRecommendation-WebAPI/?id=' + idS)
