@@ -95,36 +95,21 @@ if __name__ == "__main__":
         result = []
         memories = wmi.query("select * from Win32_PhysicalMemory")
         for memory in memories:
+            obj = {
+                    "capacity": int(memory.Capacity),
+                    "ghz": int(memory.Speed),
+                    "bank label": memory.bankLabel,
+                    "Device locator:": memory.DeviceLocator
+                }
             if hasattr(memory, "SMBIOSMemoryType"):
-                result.append(
-                    {
-                        "capacity": int(memory.Capacity),
-                        "type": memory_types[int(memory.SMBIOSMemoryType)],
-                        "ghz": int(memory.Speed)
-                    }
-                )
+                obj["type"] = memory_types[int(memory.SMBIOSMemoryType)]
             else:
-                result.append(
-                    {
-                        "capacity": int(memory.Capacity),
-                        "type": memory_types[int(memory.MemoryType)],
-                        "ghz": int(memory.Speed)
-                    }
-                )
+                obj["type"] = memory_types[int(memory.MemoryType)]
+            result.append(obj)
         return result
 
     def get_motherboard():
-        res = []
-        mb = wmi.query("select * from Win32_baseboard")
-        for mbs in mb:
-            res.append(
-                {
-                    "manufacturer": mbs.Manufacturer,
-                    "product": mbs.Product,
-                    "version": mbs.Version
-                }
-            )
-        return res
+        return wmi.Win32_baseboard()[0]
 
     def get_gpus():
         res1 = []
@@ -154,8 +139,9 @@ if __name__ == "__main__":
     def get_ram_maxcapacity():
         return wmi.Win32_PhysicalMemoryArray()[0].MaxCapacity
 
-    # Still not full info about motherboard, but now we have info about the product himself.
     # Same thing about mediaType HardDisk, and GPU details.
+
+    mobo = get_motherboard()
 
     data = {
         "processor": {
@@ -169,6 +155,8 @@ if __name__ == "__main__":
         "motherBoard": {
             "ddrSockets": get_num_of_ram_slots(),
             "maxRam": get_ram_maxcapacity(),
+            "Manufacturer": mobo.Manufacturer,
+            "product": mobo.Product
         },
         "gpus": get_gpus()
     }
@@ -181,5 +169,4 @@ if __name__ == "__main__":
     log(r.status_code)
     log(r.text)
     idS = str(r.json()['id'])
-    webbrowser.open(
-        'https://baruchiro.github.io/HWRecommendation-WebAPI/?id='+idS)
+    webbrowser.open('https://baruchiro.github.io/HWRecommendation-WebAPI/?id='+idS)
