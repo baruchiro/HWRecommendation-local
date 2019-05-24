@@ -8,4 +8,4 @@ __pycache__
 .vscode
 .noseids
 nosetests.xml
-/.venv
+.venv/
