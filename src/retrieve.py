@@ -162,7 +162,7 @@ def hardware_json():
 def post_data(data_post):
     headers = {'Content-Type': 'application/json'}
     return requests.post(
-        'https://hwwebapi.azurewebsites.net/api/Computers/Body', json=data, headers=headers)
+        'https://hwwebapi.azurewebsites.net/api/Scans', json=data_post, headers=headers)
 
 
 if __name__ == "__main__":

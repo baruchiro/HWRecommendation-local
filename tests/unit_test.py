@@ -8,7 +8,7 @@ class TestRetrieve(unittest.TestCase):
         data = retrieve.hardware_json()
         response = retrieve.post_data(data)
         self.assertEqual(response.status_code, 201)
-        test_compare_request_response(data, response.json())
+        test_compare_request_response(data, response.json()["computer"])
 
 
 def test_compare_request_response(expected, actual):
