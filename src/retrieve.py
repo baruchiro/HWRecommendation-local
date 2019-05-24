@@ -159,10 +159,10 @@ def hardware_json():
     return data
 
 
-def postData(data):
+def post_data(data_post):
     headers = {'Content-Type': 'application/json'}
     return requests.post(
-        'https://hwwebapi.azurewebsites.net/api/Computers/Body', json=data, headers=headers)
+        'https://hwwebapi.azurewebsites.net/api/Scans', json=data_post, headers=headers)
 
 
 if __name__ == "__main__":
@@ -173,9 +173,10 @@ if __name__ == "__main__":
     data = hardware_json()
     log(data)
 
-    r = postData(data)
+    r = post_data(data)
 
     log(r.status_code)
     log(r.text)
     idS = str(r.json()['id'])
-    webbrowser.open('https://baruchiro.github.io/HWRecommendation-WebAPI/?id=' + idS)
+    webbrowser.open(
+        'https://baruchiro.github.io/HWRecommendation-WebAPI/?id=' + idS)
